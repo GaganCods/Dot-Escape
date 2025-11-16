@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="description" content="Path Drawing Challenge - Draw from START to END without touching obstacles">
+    <title>Path Drawing Challenge</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUGF0aCBEcmF3aW5nIENoYWxsZW5nZSIsInNob3J0X25hbWUiOiJQYXRoIEdhbWUiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzFlMjkzYiIsInRoZW1lX2NvbG9yIjoiIzFlMjkzYiJ9">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: #1e293b;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 1.5rem;
+            max-width: 28rem;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .settings-btn {
+            background: #334155;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: #475569;
+        }
+
+        .settings-panel {
+            background: #334155;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .settings-panel h3 {
+            color: white;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .setting-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .setting-label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            background: #475569;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 2.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        .timer {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .overlay.menu { background: rgba(0, 0, 0, 0.8); }
+        .overlay.lost { background: rgba(127, 29, 29, 0.8); }
+        .overlay.won { background: rgba(20, 83, 45, 0.8); }
+
+        .overlay-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .overlay-title {
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-text {
+            color: white;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 0 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: white;
+            color: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .controls .btn {
+            flex: 1;
+        }
+
+        .instructions {
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .instructions h3 {
+            color: white;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .instructions li {
+            margin-bottom: 0.25rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        .bounce {
+            animation: bounce 0.6s infinite;
+        }
+
+        svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1 class="title">Path Challenge</h1>
+                <p class="subtitle">Level <span id="levelNum">1</span> • <span id="difficultyName">Easy</span></p>
+            </div>
+            <button class="settings-btn" onclick="toggleSettings()">
+                <svg><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel" class="settings-panel hidden">
+            <h3>Settings</h3>
+            <div class="setting-group">
+                <label class="setting-label">Difficulty</label>
+                <select id="difficultySelect" onchange="changeDifficulty(this.value)">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="extreme">Extreme</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div id="customSettings" class="hidden">
+                <div class="setting-group">
+                    <label class="setting-label">Dot Count: <span id="dotCountVal">30</span></label>
+                    <input type="range" id="dotCount" min="10" max="100" value="30" oninput="updateCustom()">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Dot Size: <span id="dotSizeVal">8</span></label>
+                    <input type="range" id="dotSize" min="4" max="12" value="8" oninput="updateCustom()">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Dot Color</label>
+                    <input type="color" id="dotColor" value="#ef4444" onchange="updateCustom()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="400" height="600"></canvas>
+            <div id="timer" class="timer hidden"></div>
+
+            <!-- Menu Overlay -->
+            <div id="menuOverlay" class="overlay menu">
+                <div class="overlay-icon">⚡</div>
+                <h2 class="overlay-title">Path Challenge</h2>
+                <p class="overlay-text">Draw from START to END without touching obstacles</p>
+                <button class="btn btn-primary" onclick="startGame()">
+                    <svg><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Start Game
+                </button>
+            </div>
+
+            <!-- Lost Overlay -->
+            <div id="lostOverlay" class="overlay lost hidden pulse">
+                <div class="overlay-icon">💥</div>
+                <h2 class="overlay-title">Collision!</h2>
+                <div class="button-group">
+                    <button class="btn btn-danger" onclick="restartLevel()">
+                        <svg><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        Retry
+                    </button>
+                    <button class="btn btn-secondary" onclick="goToMenu()">
+                        <svg><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        Menu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Won Overlay -->
+            <div id="wonOverlay" class="overlay won hidden">
+                <div class="overlay-icon bounce">🏆</div>
+                <h2 class="overlay-title">Success!</h2>
+                <p class="overlay-text">
+                    Time: <span id="completionTime">0</span>s<br>
+                    Score: <span id="score">0</span><br>
+                    <span id="bestTime" style="color: #fbbf24;"></span>
+                </p>
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="nextLevel()">Next Level</button>
+                    <button class="btn btn-secondary" onclick="restartLevel()">Retry</button>
+                    <button class="btn btn-secondary" onclick="goToMenu()">
+                        <svg><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="gameControls" class="controls hidden">
+            <button class="btn btn-secondary" onclick="clearPath()">Clear Path</button>
+            <button class="btn btn-secondary" onclick="restartLevel()">
+                <svg><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                Restart
+            </button>
+            <button class="btn btn-secondary" onclick="goToMenu()">
+                <svg><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            </button>
+        </div>
+
+        <!-- Instructions -->
+        <div id="instructions" class="instructions">
+            <h3>How to Play</h3>
+            <ul>
+                <li>• Click/tap on START to begin drawing</li>
+                <li>• Draw a path to the END without hitting obstacles</li>
+                <li>• Complete levels as fast as possible for high scores</li>
+                <li>• Use custom settings to create your own challenge</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const CANVAS_WIDTH = 400;
+        const CANVAS_HEIGHT = 600;
+        const START_Y = CANVAS_HEIGHT - 40;
+        const END_Y = 40;
+        const START_X = CANVAS_WIDTH / 2;
+        const END_X = CANVAS_WIDTH / 2;
+        const LINE_WIDTH = 3;
+        const END_RADIUS = 25;
+
+        let gameState = 'menu';
+        let isDrawing = false;
+        let path = [];
+        let obstacles = [];
+        let level = 1;
+        let difficulty = 'easy';
+        let startTime = null;
+        let bestTimes = {};
+        let customSettings = {
+            dotCount: 30,
+            dotSize: 8,
+            dotColor: '#ef4444'
+        };
+
+        const difficultySettings = {
+            easy: { dots: 20, size: 8, spacing: 40 },
+            medium: { dots: 35, size: 7, spacing: 30 },
+            hard: { dots: 55, size: 6, spacing: 25 },
+            extreme: { dots: 80, size: 5, spacing: 20 },
+            custom: { dots: 30, size: 8, spacing: 25 }
+        };
+
+        function generateObstacles() {
+            const settings = difficulty === 'custom' 
+                ? { dots: customSettings.dotCount, size: customSettings.dotSize, spacing: 25 }
+                : difficultySettings[difficulty];
+            
+            const dots = [];
+            const minDistance = settings.spacing;
+
+            const isTooClose = (x, y, existing) => {
+                if (Math.hypot(x - START_X, y - START_Y) < 60) return true;
+                if (Math.hypot(x - END_X, y - END_Y) < 60) return true;
+                return existing.some(dot => Math.hypot(x - dot.x, y - dot.y) < minDistance);
+            };
+
+            while (dots.length < settings.dots) {
+                const x = Math.random() * (CANVAS_WIDTH - 40) + 20;
+                const y = Math.random() * (CANVAS_HEIGHT - 120) + 60;
+                
+                if (!isTooClose(x, y, dots)) {
+                    dots.push({ x, y, size: settings.size });
+                }
+            }
+
+            return dots;
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Background
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Grid
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < CANVAS_WIDTH; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, CANVAS_HEIGHT);
+                ctx.stroke();
+            }
+            for (let i = 0; i < CANVAS_HEIGHT; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(CANVAS_WIDTH, i);
+                ctx.stroke();
+            }
+
+            // Obstacles
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = difficulty === 'custom' ? customSettings.dotColor : '#ef4444';
+                ctx.beginPath();
+                ctx.arc(obstacle.x, obstacle.y, obstacle.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = difficulty === 'custom' ? customSettings.dotColor : '#ef4444';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            // START
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(START_X, START_Y, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('START', START_X, START_Y + 3);
+
+            // END
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.arc(END_X, END_Y, END_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('END', END_X, END_Y + 4);
+
+            // Path
+            if (path.length > 1) {
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = LINE_WIDTH;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#fbbf24';
+                ctx.beginPath();
+                ctx.moveTo(path[0].x, path[0].y);
+                path.forEach(point => ctx.lineTo(point.x, point.y));
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CANVAS_WIDTH / rect.width;
+            const scaleY = CANVAS_HEIGHT / rect.height;
+            
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function checkCollision(x, y) {
+            return obstacles.some(obstacle => 
+                Math.hypot(x - obstacle.x, y - obstacle.y) < obstacle.size + LINE_WIDTH / 2
+            );
+        }
+
+        function checkWin(x, y) {
+            return Math.hypot(x - END_X, y - END_Y) < END_RADIUS;
+        }
+
+        function playSound(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (type === 'collision') {
+                oscillator.frequency.value = 100;
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } else if (type === 'win') {
+                oscillator.frequency.value = 523.25;
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.15);
+                
+                setTimeout(() => {
+                    const osc2 = audioContext.createOscillator();
+                    const gain2 = audioContext.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioContext.destination);
+                    osc2.frequency.value = 659.25;
+                    gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    osc2.start(audioContext.currentTime);
+                    osc2.stop(audioContext.currentTime + 0.2);
+                }, 150);
+            }
+        }
+
+        function handleStart(e) {
+            if (gameState !== 'playing') return;
+            e.preventDefault();
+            
+            const { x, y } = getCanvasCoordinates(e);
+            const distFromStart = Math.hypot(x - START_X, y - START_Y);
+            
+            if (distFromStart < 20) {
+                isDrawing = true;
+                path = [{ x, y }];
+                drawGame();
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDrawing || gameState !== 'playing') return;
+            e.preventDefault();
+            
+            const { x, y } = getCanvasCoordinates(e);
+            
+            if (checkCollision(x, y)) {
+                isDrawing = false;
+                gameState = 'lost';
+                playSound('collision');
+                showOverlay('lost');
+                return;
+            }
+            
+            if (checkWin(x, y)) {
+                isDrawing = false;
+                const time = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('completionTime').textContent = time;
+                
+                const key = `${difficulty}-${level}`;
+                if (!bestTimes[key] || parseFloat(time) < parseFloat(bestTimes[key])) {
+                    bestTimes[key] = time;
+                    document.getElementById('bestTime').textContent = `Best: ${time}s`;
+                } else {
+                    document.getElementById('bestTime').textContent = `Best: ${bestTimes[key]}s`;
+                }
+                
+                const speedBonus = Math.max(0, 100 - Math.floor(parseFloat(time) * 5));
+                const accuracyBonus = Math.max(0, 100 - path.length / 5);
+                document.getElementById('score').textContent = Math.floor(speedBonus + accuracyBonus);
+                
+                gameState = 'won';
+                playSound('win');
+                showOverlay('won');
+                return;
+            }
+            
+            path.push({ x, y });
+            drawGame();
+        }
+
+        function handleEnd() {
+            isDrawing = false;
+        }
+
+        function updateTimer() {
+            if (gameState === 'playing' && startTime) {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                document.getElementById('timer').textContent = `${elapsed}s`;
+                requestAnimationFrame(updateTimer);
+            }
+        }
+
+        function showOverlay(type) {
+            document.getElementById('menuOverlay').classList.add('hidden');
+            document.getElementById('lostOverlay').classList.add('hidden');
+            document.getElementById('wonOverlay').classList.add('hidden');
+            document.getElementById('timer').classList.add('hidden');
+            document.getElementById('gameControls').classList.add('hidden');
+            document.getElementById('instructions').classList.add('hidden');
+
+            if (type === 'menu') {
+                document.getElementById('menuOverlay').classList.remove('hidden');
+                document.getElementById('instructions').classList.remove('hidden');
+            } else if (type === 'lost') {
+                document.getElementById('lostOverlay').classList.remove('hidden');
+            } else if (type === 'won') {
+                document.getElementById('wonOverlay').classList.remove('hidden');
+            } else if (type === 'playing') {
+                document.getElementById('timer').classList.remove('hidden');
+                document.getElementById('gameControls').classList.remove('hidden');
+            }
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            path = [];
+            obstacles = generateObstacles();
+            startTime = Date.now();
+            showOverlay('playing');
+            drawGame();
+            updateTimer();
+        }
+
+        function restartLevel() {
+            startGame();
+        }
+
+        function nextLevel() {
+            level++;
+            document.getElementById('levelNum').textContent = level;
+            startGame();
+        }
+
+        function goToMenu() {
+            gameState = 'menu';
+            level = 1;
+            document.getElementById('levelNum').textContent = level;
+            showOverlay('menu');
+            drawGame();
+        }
+
+        function clearPath() {
+            path = [];
+            drawGame();
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        function changeDifficulty(value) {
+            difficulty = value;
+            document.getElementById('difficultyName').textContent = 
+                value.charAt(0).toUpperCase() + value.slice(1);
+            
+            if (value === 'custom') {
+                document.getElementById('customSettings').classList.remove('hidden');
+            } else {
+                document.getElementById('customSettings').classList.add('hidden');
+            }
+        }
+
+        function updateCustom() {
+            customSettings.dotCount = parseInt(document.getElementById('dotCount').value);
+            customSettings.dotSize = parseInt(document.getElementById('dotSize').value);
+            customSettings.dotColor = document.getElementById('dotColor').value;
+            
+            document.getElementById('dotCountVal').textContent = customSettings.dotCount;
+            document.getElementById('dotSizeVal').textContent = customSettings.dotSize;
+        }
+
+        // Event Listeners
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('mouseleave', handleEnd);
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove);
+        canvas.addEventListener('touchend', handleEnd);
+
+        // Initialize
+        drawGame();
+    </script>
+</body>
+</html>

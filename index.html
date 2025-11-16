@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e293b">
-    <meta name="description" content="Path Drawing Challenge - Draw from START to END without touching obstacles">
-    <title>Path Drawing Challenge</title>
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUGF0aCBEcmF3aW5nIENoYWxsZW5nZSIsInNob3J0X25hbWUiOiJQYXRoIEdhbWUiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzFlMjkzYiIsInRoZW1lX2NvbG9yIjoiIzFlMjkzYiJ9">
+    <meta name="description" content="Dot Escape - Draw from START to END without touching obstacles">
+    <title>Dot Escape - Path Drawing Challenge</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html {
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         body {
@@ -20,9 +24,9 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 1rem;
-            overflow: hidden;
+            padding-bottom: 2rem;
         }
 
         .game-container {
@@ -32,6 +36,7 @@
             padding: 1.5rem;
             max-width: 28rem;
             width: 100%;
+            margin: 1rem auto;
         }
 
         .header {
@@ -113,6 +118,7 @@
             overflow: hidden;
             margin-bottom: 1rem;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            background: #1e293b;
         }
 
         canvas {
@@ -134,6 +140,7 @@
             border-radius: 0.5rem;
             font-family: monospace;
             font-size: 0.875rem;
+            pointer-events: none;
         }
 
         .overlay {
@@ -144,6 +151,7 @@
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(5px);
+            padding: 1rem;
         }
 
         .overlay.menu { background: rgba(0, 0, 0, 0.8); }
@@ -173,6 +181,7 @@
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn {
@@ -219,10 +228,12 @@
         .controls {
             display: flex;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .controls .btn {
             flex: 1;
+            min-width: 100px;
         }
 
         .instructions {
@@ -249,7 +260,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         @keyframes pulse {
@@ -279,27 +290,50 @@
             stroke-linejoin: round;
             fill: none;
         }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0.5rem;
+                padding-bottom: 1rem;
+            }
+
+            .game-container {
+                padding: 1rem;
+                margin: 0.5rem auto;
+            }
+
+            .title {
+                font-size: 1.25rem;
+            }
+
+            .overlay-title {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <!-- Header -->
         <div class="header">
             <div>
-                <h1 class="title">Path Challenge</h1>
+                <h1 class="title">Dot Escape</h1>
                 <p class="subtitle">Level <span id="levelNum">1</span> • <span id="difficultyName">Easy</span></p>
             </div>
-            <button class="settings-btn" onclick="toggleSettings()">
+            <button class="settings-btn" id="settingsBtn">
                 <svg><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
         </div>
 
-        <!-- Settings Panel -->
         <div id="settingsPanel" class="settings-panel hidden">
             <h3>Settings</h3>
             <div class="setting-group">
                 <label class="setting-label">Difficulty</label>
-                <select id="difficultySelect" onchange="changeDifficulty(this.value)">
+                <select id="difficultySelect">
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
                     <option value="hard">Hard</option>
@@ -310,52 +344,48 @@
             <div id="customSettings" class="hidden">
                 <div class="setting-group">
                     <label class="setting-label">Dot Count: <span id="dotCountVal">30</span></label>
-                    <input type="range" id="dotCount" min="10" max="100" value="30" oninput="updateCustom()">
+                    <input type="range" id="dotCount" min="10" max="100" value="30">
                 </div>
                 <div class="setting-group">
                     <label class="setting-label">Dot Size: <span id="dotSizeVal">8</span></label>
-                    <input type="range" id="dotSize" min="4" max="12" value="8" oninput="updateCustom()">
+                    <input type="range" id="dotSize" min="4" max="12" value="8">
                 </div>
                 <div class="setting-group">
                     <label class="setting-label">Dot Color</label>
-                    <input type="color" id="dotColor" value="#ef4444" onchange="updateCustom()">
+                    <input type="color" id="dotColor" value="#ef4444">
                 </div>
             </div>
         </div>
 
-        <!-- Canvas -->
         <div class="canvas-wrapper">
             <canvas id="gameCanvas" width="400" height="600"></canvas>
             <div id="timer" class="timer hidden"></div>
 
-            <!-- Menu Overlay -->
             <div id="menuOverlay" class="overlay menu">
                 <div class="overlay-icon">⚡</div>
-                <h2 class="overlay-title">Path Challenge</h2>
+                <h2 class="overlay-title">Dot Escape</h2>
                 <p class="overlay-text">Draw from START to END without touching obstacles</p>
-                <button class="btn btn-primary" onclick="startGame()">
+                <button class="btn btn-primary" id="startBtn">
                     <svg><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     Start Game
                 </button>
             </div>
 
-            <!-- Lost Overlay -->
             <div id="lostOverlay" class="overlay lost hidden pulse">
                 <div class="overlay-icon">💥</div>
                 <h2 class="overlay-title">Collision!</h2>
                 <div class="button-group">
-                    <button class="btn btn-danger" onclick="restartLevel()">
+                    <button class="btn btn-danger" id="retryBtn1">
                         <svg><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                         Retry
                     </button>
-                    <button class="btn btn-secondary" onclick="goToMenu()">
+                    <button class="btn btn-secondary" id="menuBtn1">
                         <svg><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                         Menu
                     </button>
                 </div>
             </div>
 
-            <!-- Won Overlay -->
             <div id="wonOverlay" class="overlay won hidden">
                 <div class="overlay-icon bounce">🏆</div>
                 <h2 class="overlay-title">Success!</h2>
@@ -365,28 +395,26 @@
                     <span id="bestTime" style="color: #fbbf24;"></span>
                 </p>
                 <div class="button-group">
-                    <button class="btn btn-success" onclick="nextLevel()">Next Level</button>
-                    <button class="btn btn-secondary" onclick="restartLevel()">Retry</button>
-                    <button class="btn btn-secondary" onclick="goToMenu()">
+                    <button class="btn btn-success" id="nextBtn">Next Level</button>
+                    <button class="btn btn-secondary" id="retryBtn2">Retry</button>
+                    <button class="btn btn-secondary" id="menuBtn2">
                         <svg><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Controls -->
         <div id="gameControls" class="controls hidden">
-            <button class="btn btn-secondary" onclick="clearPath()">Clear Path</button>
-            <button class="btn btn-secondary" onclick="restartLevel()">
+            <button class="btn btn-secondary" id="clearBtn">Clear Path</button>
+            <button class="btn btn-secondary" id="restartBtn">
                 <svg><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                 Restart
             </button>
-            <button class="btn btn-secondary" onclick="goToMenu()">
+            <button class="btn btn-secondary" id="menuBtn3">
                 <svg><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
             </button>
         </div>
 
-        <!-- Instructions -->
         <div id="instructions" class="instructions">
             <h3>How to Play</h3>
             <ul>
@@ -462,11 +490,9 @@
         function drawGame() {
             ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // Background
             ctx.fillStyle = '#1e293b';
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // Grid
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 1;
             for (let i = 0; i < CANVAS_WIDTH; i += 20) {
@@ -482,7 +508,6 @@
                 ctx.stroke();
             }
 
-            // Obstacles
             obstacles.forEach(obstacle => {
                 ctx.fillStyle = difficulty === 'custom' ? customSettings.dotColor : '#ef4444';
                 ctx.beginPath();
@@ -494,7 +519,6 @@
                 ctx.shadowBlur = 0;
             });
 
-            // START
             ctx.fillStyle = '#10b981';
             ctx.beginPath();
             ctx.arc(START_X, START_Y, 15, 0, Math.PI * 2);
@@ -507,7 +531,6 @@
             ctx.textAlign = 'center';
             ctx.fillText('START', START_X, START_Y + 3);
 
-            // END
             ctx.fillStyle = '#3b82f6';
             ctx.beginPath();
             ctx.arc(END_X, END_Y, END_RADIUS, 0, Math.PI * 2);
@@ -519,7 +542,6 @@
             ctx.font = 'bold 12px Arial';
             ctx.fillText('END', END_X, END_Y + 4);
 
-            // Path
             if (path.length > 1) {
                 ctx.strokeStyle = '#fbbf24';
                 ctx.lineWidth = LINE_WIDTH;
@@ -566,41 +588,48 @@
         }
 
         function playSound(type) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            if (type === 'collision') {
-                oscillator.frequency.value = 100;
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            } else if (type === 'win') {
-                oscillator.frequency.value = 523.25;
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.15);
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
                 
-                setTimeout(() => {
-                    const osc2 = audioContext.createOscillator();
-                    const gain2 = audioContext.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(audioContext.destination);
-                    osc2.frequency.value = 659.25;
-                    gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    osc2.start(audioContext.currentTime);
-                    osc2.stop(audioContext.currentTime + 0.2);
-                }, 150);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                if (type === 'collision') {
+                    oscillator.frequency.value = 100;
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                } else if (type === 'win') {
+                    oscillator.frequency.value = 523.25;
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.15);
+                    
+                    setTimeout(() => {
+                        const osc2 = audioContext.createOscillator();
+                        const gain2 = audioContext.createGain();
+                        osc2.connect(gain2);
+                        gain2.connect(audioContext.destination);
+                        osc2.frequency.value = 659.25;
+                        gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        osc2.start(audioContext.currentTime);
+                        osc2.stop(audioContext.currentTime + 0.2);
+                    }, 150);
+                }
+            } catch (e) {
+                console.log('Audio not supported');
             }
         }
 
         function handleStart(e) {
             if (gameState !== 'playing') return;
-            e.preventDefault();
+            
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
             
             const { x, y } = getCanvasCoordinates(e);
             const distFromStart = Math.hypot(x - START_X, y - START_Y);
@@ -614,7 +643,10 @@
 
         function handleMove(e) {
             if (!isDrawing || gameState !== 'playing') return;
-            e.preventDefault();
+            
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
             
             const { x, y } = getCanvasCoordinates(e);
             
@@ -750,9 +782,26 @@
         canvas.addEventListener('mousemove', handleMove);
         canvas.addEventListener('mouseup', handleEnd);
         canvas.addEventListener('mouseleave', handleEnd);
-        canvas.addEventListener('touchstart', handleStart);
-        canvas.addEventListener('touchmove', handleMove);
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        canvas.addEventListener('touchmove', handleMove, { passive: false });
         canvas.addEventListener('touchend', handleEnd);
+
+        document.getElementById('settingsBtn').addEventListener('click', toggleSettings);
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('retryBtn1').addEventListener('click', restartLevel);
+        document.getElementById('retryBtn2').addEventListener('click', restartLevel);
+        document.getElementById('menuBtn1').addEventListener('click', goToMenu);
+        document.getElementById('menuBtn2').addEventListener('click', goToMenu);
+        document.getElementById('menuBtn3').addEventListener('click', goToMenu);
+        document.getElementById('nextBtn').addEventListener('click', nextLevel);
+        document.getElementById('clearBtn').addEventListener('click', clearPath);
+        document.getElementById('restartBtn').addEventListener('click', restartLevel);
+        document.getElementById('difficultySelect').addEventListener('change', function() {
+            changeDifficulty(this.value);
+        });
+        document.getElementById('dotCount').addEventListener('input', updateCustom);
+        document.getElementById('dotSize').addEventListener('input', updateCustom);
+        document.getElementById('dotColor').addEventListener('change', updateCustom);
 
         // Initialize
         drawGame();
